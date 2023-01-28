@@ -1,0 +1,219 @@
+﻿@page "/google-auth-callback"
+@using Google.Apis.Download;
+
+
+<MudButton OnClick="@ConnectGoogleDrive" Variant="Variant.Filled" Color="Color.Primary">
+    <MudText>Sign In</MudText>
+</MudButton>
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudItem xs="3">
+            <MudList Clickable="true">
+                @foreach (var item in driveFolderFiles)
+                {
+                    <MudListItem Text="@item.Name" OnClick="@((e) => GetFolderFiles(item.Id))" Icon="@Icons.Custom.Uncategorized.Folder" />
+                }
+
+                @foreach (var item in driveFiles)
+                {
+                    <MudListItem Text="@item.Name" OnClick="@((e) => DownloadFile(item.Id))" Icon="@Icons.Custom.FileFormats.FileExcel" />
+                }
+            </MudList>
+        </MudItem>
+        <MudItem xs="8">
+
+            @if (driveFiles.Count == 0)
+            {
+                <p><em>Loading...</em></p>
+            }
+            else
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>MimeType</th>
+                            <th>Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var forecast in driveFiles)
+                        {
+                            <tr>
+                                <td>@forecast.Id</td>
+                                <td>@forecast.MimeType</td>
+                                <td>@forecast.Name</td>
+                               
+
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </MudItem>
+    </MudItem>
+</MudGrid>
+
+
+@code {
+
+    private static string[] scopes = { DriveService.Scope.Drive };
+    private static string ApplicationName = "DriveApi";
+    private const string CRED_PATH = "token.json";
+
+    private List<DriveFile> driveFiles = new();
+    private List<DriveFile> driveFolderFiles = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    public void GetFolderFiles(string Id)
+    {
+        driveFolderFiles = GetDriveFolderFiles(Id);
+        driveFiles = GetDriveFiles(Id);
+
+    }
+
+    public void DownloadFile(string Id)
+    {
+        var credatials = GetCredential();
+
+        var service = GetDriveService(credatials, ApplicationName);
+
+        var request = service.Files.Get(Id);
+        request.MediaDownloader.ProgressChanged += (IDownloadProgress progress) =>
+    {
+        switch (progress.Status)
+        {
+            case DownloadStatus.Downloading:
+                {
+                    Console.WriteLine(progress.BytesDownloaded);
+                    break;
+                }
+            case DownloadStatus.Completed:
+                {
+                    Console.WriteLine("Download complete.");
+                    break;
+                }
+            case DownloadStatus.Failed:
+                {
+                    Console.WriteLine("Download failed.");
+                    break;
+                }
+        }
+    };
+        request.Download(new FileStream("C:\\Users\\DataMicron X\\Downloads\\" + $"{Guid.NewGuid()}.xlsx", FileMode.OpenOrCreate));
+
+    }
+
+    public UserCredential GetCredential()
+    {
+        UserCredential credential;
+
+        var stream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read);
+
+        credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
+                GoogleClientSecrets.Load(stream).Secrets,
+                scopes,
+                Environment.UserName,
+                CancellationToken.None,
+                new FileDataStore(CRED_PATH, true)).Result;
+
+        return credential;
+    }
+
+    public DriveService GetDriveService(UserCredential credential, string appName)
+    {
+        return new DriveService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = appName
+            });
+    }
+
+    public List<DriveFile> GetDriveFiles(string Id = "")
+    {
+        var result = new List<DriveFile>();
+
+        var credential = GetCredential();
+
+        // Create Drive API service.
+        var service = GetDriveService(credential, ApplicationName);
+
+        FilesResource.ListRequest listRequest = service.Files.List();
+
+        string query;
+        if (!string.IsNullOrEmpty(Id))
+            query = $"(mimeType='text/csv' "
+             + "or mimeType='application/vnd.google-apps.spreadsheet' "
+             + "or mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' "
+            + "or mimeType='application/vnd.ms-excel') "
+            + $"and ('{Id}' in parents and trashed = false)";
+        else
+            query = $"mimeType='text/csv' "
+            + "or mimeType='application/vnd.ms-excel' "
+            + "or mimeType='application/vnd.google-apps.spreadsheet' "
+            + "or mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ";
+
+        listRequest.Q = query;
+
+        var fileList = listRequest.Execute();
+
+        foreach (var item in fileList.Files)
+        {
+            var drive = new DriveFile();
+            drive.Id = item.Id;
+            drive.Name = item.Name;
+            drive.MimeType = item.MimeType;
+            drive.Kind = item.Kind;
+            result.Add(drive);
+        }
+
+        return result;
+    }
+
+    public List<DriveFile> GetDriveFolderFiles(string Id = "")
+    {
+        var result = new List<DriveFile>();
+
+        var credential = GetCredential();
+
+        // Create Drive API service.
+        var service = GetDriveService(credential, ApplicationName);
+
+        FilesResource.ListRequest listRequest = service.Files.List();
+        string query;
+        if (!string.IsNullOrEmpty(Id))
+            query = $"mimeType='application/vnd.google-apps.folder' and '{Id}' in parents and trashed = false";
+        else
+            query = "mimeType='application/vnd.google-apps.folder'";
+
+        listRequest.Q = query;
+
+        var fileList = listRequest.Execute();
+
+        foreach (var item in fileList.Files)
+        {
+            var drive = new DriveFile();
+            drive.Id = item.Id;
+            drive.Name = item.Name;
+            drive.MimeType = item.MimeType;
+            drive.Kind = item.Kind;
+            result.Add(drive);
+        }
+
+        return result;
+    }
+
+    public async void ConnectGoogleDrive()
+    {
+        await OnInitializedAsync();
+        driveFiles = GetDriveFiles();
+        driveFolderFiles = GetDriveFolderFiles();
+
+    }
+}
