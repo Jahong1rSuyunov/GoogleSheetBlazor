@@ -2,56 +2,29 @@
 @using Google.Apis.Download;
 
 
-<MudButton OnClick="@ConnectGoogleDrive" Variant="Variant.Filled" Color="Color.Primary">
+
+
+
+
+<MudButton OnClick="@ConnectGoogleDrive" Variant="Variant.Filled" Color="MudBlazor.Color.Primary">
     <MudText>Sign In</MudText>
 </MudButton>
 
 <MudGrid>
     <MudItem xs="12">
-        <MudItem xs="3">
+        <MudItem Class="center" xs="6">
             <MudList Clickable="true">
                 @foreach (var item in driveFolderFiles)
                 {
-                    <MudListItem Text="@item.Name" OnClick="@((e) => GetFolderFiles(item.Id))" Icon="@Icons.Custom.Uncategorized.Folder" />
+                    <MudListItem Text="@(item.Name + " - " + item.Id)" OnClick="@((e) => GetFolderFiles(item.Id))" Icon="@Icons.Custom.Uncategorized.Folder" />
+
                 }
 
                 @foreach (var item in driveFiles)
                 {
-                    <MudListItem Text="@item.Name" OnClick="@((e) => DownloadFile(item.Id))" Icon="@Icons.Custom.FileFormats.FileExcel" />
+                    <MudListItem Text="@(item.Name + " - " + item.Id +" - " + item.MimeType)" OnClick="@((e) => DownloadFile(item.Id, item.MimeType))" Icon="@Icons.Custom.FileFormats.FileExcel" />
                 }
             </MudList>
-        </MudItem>
-        <MudItem xs="8">
-
-            @if (driveFiles.Count == 0)
-            {
-                <p><em>Loading...</em></p>
-            }
-            else
-            {
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Id</th>
-                            <th>MimeType</th>
-                            <th>Name</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var forecast in driveFiles)
-                        {
-                            <tr>
-                                <td>@forecast.Id</td>
-                                <td>@forecast.MimeType</td>
-                                <td>@forecast.Name</td>
-                               
-
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-
         </MudItem>
     </MudItem>
 </MudGrid>
@@ -68,7 +41,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-
+        string userName = System.Environment.UserName;
+        Console.WriteLine("Logged in user: " + userName);
     }
 
     public void GetFolderFiles(string Id)
@@ -78,36 +52,49 @@
 
     }
 
-    public void DownloadFile(string Id)
+    public void DownloadFile(string Id, string mimType)
     {
         var credatials = GetCredential();
 
+        //var service = GetDriveService(credatials, ApplicationName);
         var service = GetDriveService(credatials, ApplicationName);
 
-        var request = service.Files.Get(Id);
-        request.MediaDownloader.ProgressChanged += (IDownloadProgress progress) =>
-    {
-        switch (progress.Status)
-        {
-            case DownloadStatus.Downloading:
-                {
-                    Console.WriteLine(progress.BytesDownloaded);
-                    break;
-                }
-            case DownloadStatus.Completed:
-                {
-                    Console.WriteLine("Download complete.");
-                    break;
-                }
-            case DownloadStatus.Failed:
-                {
-                    Console.WriteLine("Download failed.");
-                    break;
-                }
-        }
-    };
-        request.Download(new FileStream("C:\\Users\\DataMicron X\\Downloads\\" + $"{Guid.NewGuid()}.xlsx", FileMode.OpenOrCreate));
+        var file = service.Files.Get(Id).Execute();
 
+        var request = file.ExportLinks["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
+
+        var xlsxBytes = service.HttpClient.GetByteArrayAsync(downloadUrl).Result;
+
+    //    request.MediaDownloader.ProgressChanged += (IDownloadProgress progress) =>
+    //{
+    //    switch (progress.Status)
+    //    {
+    //        case DownloadStatus.Downloading:
+    //            {
+    //                Console.WriteLine(progress.BytesDownloaded);
+    //                break;
+    //            }
+    //        case DownloadStatus.Completed:
+    //            {
+    //                Console.WriteLine("Download complete.");
+    //                break;
+    //            }
+    //        case DownloadStatus.Failed:
+    //            {
+    //                Console.WriteLine($"Download failed. {progress.Exception.Message}");
+    //                break;
+    //            }
+    //    }
+    //};
+    //    var stream = new System.IO.MemoryStream();
+    //    //request.Download(new FileStream("C:\\Users\\DataMicron X\\Downloads\\" + $"{Guid.NewGuid()}.csv", FileMode.OpenOrCreate));
+    //    request.Download(stream);
+        using (var fileStream = new FileStream("C:\\Users\\DataMicron X\\Downloads\\" + $"{Guid.NewGuid()}.xlsx", FileMode.Create, FileAccess.Write))
+        {
+            stream.Seek(0, SeekOrigin.Begin);
+            stream.CopyTo(fileStream);
+        };
+        
     }
 
     public UserCredential GetCredential()
@@ -134,6 +121,15 @@
                 ApplicationName = appName
             });
     }
+    public SheetsService GetSheetService(UserCredential credential, string appName)
+    {
+        return new SheetsService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = appName
+            });
+    }
+    
 
     public List<DriveFile> GetDriveFiles(string Id = "")
     {
@@ -175,6 +171,8 @@
 
         return result;
     }
+    
+    
 
     public List<DriveFile> GetDriveFolderFiles(string Id = "")
     {
@@ -209,9 +207,8 @@
         return result;
     }
 
-    public async void ConnectGoogleDrive()
+    public void ConnectGoogleDrive()
     {
-        await OnInitializedAsync();
         driveFiles = GetDriveFiles();
         driveFolderFiles = GetDriveFolderFiles();
 
