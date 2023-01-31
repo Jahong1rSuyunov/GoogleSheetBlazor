@@ -1,6 +1,7 @@
 ﻿@page "/google-auth-callback"
 @using Google.Apis.Download;
 @using Google.Apis.Sheets.v4;
+@inject ISnackbar Snackbar
 
 
 
@@ -17,21 +18,23 @@
             <MudList Clickable="true">
                 @foreach (var item in driveFolderFiles)
                 {
-                    <MudListItem Text="@(item.Name + " - " + item.Id)" OnClick="@((e) => GetFolderFiles(item.Id))" Icon="@Icons.Custom.Uncategorized.Folder" />
+                    <MudListItem Text="@(item.Name)" OnClick="@((e) => GetFolderFiles(item.Id))" Icon="@Icons.Custom.Uncategorized.Folder" />
 
                 }
 
                 @foreach (var item in driveFiles)
                 {
-                    <MudListItem Text="@(item.Name + " - " + item.Id +" - " + item.MimeType)" OnClick="@((e) => DownloadFile(item))" Icon="@Icons.Custom.FileFormats.FileExcel" />
+                    <MudListItem Text="@(item.Name)" OnClick="@((e) => DownloadFile(item))" Icon="@Icons.Custom.FileFormats.FileExcel" />
                 }
             </MudList>
         </MudItem>
     </MudItem>
 </MudGrid>
 
+<MudOverlay @bind-Visible="isVisible" DarkBackground="true" AutoClose="true" />
 
 @code {
+    private bool isVisible = false;
 
     private static string[] scopes = { DriveService.Scope.Drive };
     private static string ApplicationName = "DriveApi";
@@ -55,6 +58,7 @@
 
     public void DownloadFile(DriveFile driveFile)
     {
+        isVisible = true;
         if (driveFile.MimeType == "application/vnd.google-apps.spreadsheet")
         {
             SheetDownload(driveFile);
@@ -87,16 +91,19 @@
             case DownloadStatus.Completed:
                 {
                     Console.WriteLine("Download complete.");
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomStart;
+                    Snackbar.Add("Downloaded ", Severity.Success);
                     break;
                 }
             case DownloadStatus.Failed:
                 {
                     Console.WriteLine($"Download failed. {progress.Exception.Message}");
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomStart;
+                    Snackbar.Add(progress.Exception.Message, Severity.Warning);
                     break;
                 }
         }
     };
-
         request.Download(stream);
         using (var fileStream = new FileStream("C:\\Users\\DataMicron X\\Downloads\\" + $"{Guid.NewGuid()}.xlsx", FileMode.Create, FileAccess.Write))
         {
@@ -130,11 +137,15 @@
             case DownloadStatus.Completed:
                 {
                     Console.WriteLine("Download complete.");
-                    break;
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomStart;
+                    Snackbar.Add("Downloaded ", Severity.Success);
+                    break; 
                 }
             case DownloadStatus.Failed:
                 {
                     Console.WriteLine($"Download failed. {progress.Exception.Message}");
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomStart;
+                    Snackbar.Add(progress.Exception.Message, Severity.Warning);
                     break;
                 }
         }
