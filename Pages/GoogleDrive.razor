@@ -1,0 +1,90 @@
+﻿@page "/googledrive"
+@using BlazorDownloadFile;
+@using GoogleSheetBlazor.Storages;
+@inject IJSRuntime JSRuntime
+
+@inject IBlazorDownloadFileService BlazorDownloadFileService;
+
+<MudContainer MaxWidth="MaxWidth.Large" Fixed="true">
+
+    <MudPaper Class="mb-2" Elevation="10">
+        <MudGrid Class="m-4">
+            <MudIcon Icon="@Icons.Material.Filled.AddToDrive" Size="Size.Large" Color="Color.Default" />
+            <span class="h2"> Drive</span>
+        </MudGrid>
+
+        <MudGrid>
+
+            <MudItem xs="12">
+                <MudList Clickable="true">
+                    <MudListSubheader>
+                        Nested List Items
+                    </MudListSubheader>
+                    @foreach (var folder in driveFolders)
+                    {
+                        <MudListItem OnClick="@((e) => OpenFolder(folder.Id))" Icon="@Icons.Material.Filled.FolderOpen">
+                            @folder.Name
+                        </MudListItem>
+                    }
+
+                    @foreach (var file in driveFiles)
+                    {
+                        <MudListItem OnClick="@((e) => Download(file))" Icon="@Icons.Custom.FileFormats.FileDocument">
+                            @file.Name
+                        </MudListItem>
+                    }
+
+                </MudList>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+</MudContainer>
+
+
+
+
+@code {
+    private Storage storage = new();
+
+    private List<DriveFile> driveFiles = new();
+    private List<DriveFile> driveFolders = new();
+
+    protected override Task OnInitializedAsync()
+    {
+
+        driveFolders = storage.GetDriveFolderFiles();
+        driveFiles = storage.GetDriveFiles();
+        return base.OnInitializedAsync();
+    }
+
+    public void OpenFolder(string id)
+    {
+        driveFolders = storage.GetDriveFolderFiles(id);
+        driveFiles = storage.GetDriveFiles(id);
+    }
+
+    public void Download(DriveFile file)
+    {
+
+        switch (file.MimeType)
+        {
+            case "application/vnd.google-apps.spreadsheet":
+                storage.SheetDownload(file);
+                break;
+            case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                storage.ExcelDownload(file);
+                break;
+            case "text/csv":
+                storage.CsvDownload(file);
+                break;
+            case "application/vnd.ms-excel":
+                storage.ExcelDownload(file);
+                break;
+            
+        }
+    }
+
+
+}
+

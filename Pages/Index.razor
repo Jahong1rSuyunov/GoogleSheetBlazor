@@ -1,10 +1,37 @@
 ﻿@page "/"
+@using GoogleSheetBlazor.Storages;
+
+<MudContainer Class="d-flex" Style="height:100vh" Fixed="true">
+
+    <MudGrid Class="align-start" Justify="Justify.FlexStart" Style="height:100%">
+        <MudButton OnClick="@ConnectDrive" Class="m-5" Variant="Variant.Filled" Color="MudBlazor.Color.Primary">
+            <MudText>Sign In</MudText>
+        </MudButton>
+    </MudGrid>
+
+    <MudGrid Class="align-end" Justify="Justify.FlexEnd" Style="height:100%">
+        <MudButton Href="/googledrive" Class="m-5" Variant="Variant.Filled" Disabled="disabled" Color="MudBlazor.Color.Primary">
+            <MudText>Open Drive</MudText>
+        </MudButton>
+    </MudGrid>
+
+</MudContainer>
 
 
-<PageTitle>Index</PageTitle>
 
-<h1>Hello, world!</h1>
+@code {
+    private Storage storage = new();
+    private bool disabled;
 
-Welcome to your new app.
+    protected override Task OnInitializedAsync()
+    {
+        disabled = true;
+        return base.OnInitializedAsync();
+    }
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+    private void ConnectDrive()
+    {
+        disabled = !storage.ConnectDrive();
+    }
+
+}

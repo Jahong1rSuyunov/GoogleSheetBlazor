@@ -8,9 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BlazorDownloadFile" Version="2.4.0.2" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="2.19.0" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.59.0" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.59.0.2922" />
-    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.59.0.2909" />
+    <PackageReference Include="Google.Apis.Oauth2.v2" Version="1.59.0.1869" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
     <PackageReference Include="MudBlazor" Version="6.1.7" />
   </ItemGroup>

@@ -1,6 +1,5 @@
 ﻿@page "/google-auth-callback"
 @using Google.Apis.Download;
-@using Google.Apis.Sheets.v4;
 @inject ISnackbar Snackbar
 
 
@@ -14,7 +13,7 @@
 
 <MudGrid>
     <MudItem xs="12">
-        <MudItem Class="center" xs="6">
+        <MudItem Class="center" xs="12">
             <MudList Clickable="true">
                 @foreach (var item in driveFolderFiles)
                 {
@@ -24,7 +23,7 @@
 
                 @foreach (var item in driveFiles)
                 {
-                    <MudListItem Text="@(item.Name)" OnClick="@((e) => DownloadFile(item))" Icon="@Icons.Custom.FileFormats.FileExcel" />
+                    <MudListItem Text="@(item.Name +"  "+ item.MimeType)" OnClick="@((e) => DownloadFile(item))" Icon="@Icons.Custom.FileFormats.FileExcel" />
                 }
             </MudList>
         </MudItem>
@@ -105,7 +104,7 @@
         }
     };
         request.Download(stream);
-        using (var fileStream = new FileStream("C:\\Users\\DataMicron X\\Downloads\\" + $"{Guid.NewGuid()}.xlsx", FileMode.Create, FileAccess.Write))
+        using (var fileStream = new FileStream("C:\\Users\\DataMicron X\\Downloads\\" + $"{Guid.NewGuid()}.csv", FileMode.Create, FileAccess.Write))
         {
             stream.Seek(0, SeekOrigin.Begin);
             stream.CopyTo(fileStream);
@@ -178,14 +177,6 @@
     public DriveService GetDriveService(UserCredential credential, string appName)
     {
         return new DriveService(new BaseClientService.Initializer()
-            {
-                HttpClientInitializer = credential,
-                ApplicationName = appName
-            });
-    }
-    public SheetsService GetSheetService(UserCredential credential, string appName)
-    {
-        return new SheetsService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = credential,
                 ApplicationName = appName
