@@ -5,6 +5,8 @@ VisualStudioVersion = 17.4.33110.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoogleSheetBlazor", "GoogleSheetBlazor.csproj", "{1E370297-3B7A-4357-91DF-89F00872756E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoogleDriveService", "..\GoogleDriveService\GoogleDriveService.csproj", "{24223F35-8B25-4AAF-8162-32E37DFC3213}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{1E370297-3B7A-4357-91DF-89F00872756E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E370297-3B7A-4357-91DF-89F00872756E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E370297-3B7A-4357-91DF-89F00872756E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24223F35-8B25-4AAF-8162-32E37DFC3213}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24223F35-8B25-4AAF-8162-32E37DFC3213}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24223F35-8B25-4AAF-8162-32E37DFC3213}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24223F35-8B25-4AAF-8162-32E37DFC3213}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
